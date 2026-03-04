@@ -20,6 +20,9 @@
     "react-dom": "19.2.3",
     "resend": "^6.9.3"
   },
+  "engines": {
+    "node": ">=24.0"
+  },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
