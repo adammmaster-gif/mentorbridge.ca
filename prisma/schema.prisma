@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model School {
+  id             String          @id
+  name           String
+  city           String
+  emoji          String
+  users          User[]
+  mentorProfiles MentorProfile[]
+  studyNotes     StudyNote[]
+  quizzes        Quiz[]      @relation("SchoolQuizzes")
+
+  @@map("schools")
+}
+
+model User {
+  id             Int            @id @default(autoincrement())
+  name           String
+  initials       String
+  grade          String
+  role           String
+  email          String?        @unique
+  avatarColor    Int            @default(0)
+  schoolId       String
+  school         School         @relation(fields: [schoolId], references: [id])
+  mentorProfile  MentorProfile?
+  bookedSessions Session[]      @relation("LearnerSessions")
+  hoursLogged    VolunteerHour[]
+  conversations1  Conversation[]  @relation("ConvUser1")
+  conversations2  Conversation[]  @relation("ConvUser2")
+  sentMessages    Message[]       @relation("SentMessages")
+  studyNotes      StudyNote[]     @relation("MentorStudyNotes")
+  mentorQuizzes   Quiz[]          @relation("MentorQuizzes")
+  quizAttempts    QuizAttempt[]   @relation("LearnerQuizAttempts")
+  waitlistEntries       CourseWaitlist[]    @relation("WaitlistEntries")
+  mentorStudyGroups     StudyGroup[]        @relation("MentorStudyGroups")
+  studyGroupMemberships StudyGroupMember[]  @relation("StudyGroupMembers")
+  createdAt      DateTime       @default(now())
+
+  @@map("users")
+}
+
+model MentorProfile {
+  id           Int             @id @default(autoincrement())
+  userId       Int             @unique
+  user         User            @relation(fields: [userId], references: [id])
+  schoolId     String
+  school       School          @relation(fields: [schoolId], references: [id])
+  bio          String
+  rating       Float           @default(0)
+  sessionCount Int             @default(0)
+  available    Boolean         @default(true)
+  subjects     MentorSubject[]
+  sessions     Session[]       @relation("MentorSessions")
+
+  @@map("mentor_profiles")
+}
+
+model MentorSubject {
+  id              Int           @id @default(autoincrement())
+  mentorProfileId Int
+  mentorProfile   MentorProfile @relation(fields: [mentorProfileId], references: [id])
+  courseCode      String
+
+  @@map("mentor_subjects")
+}
+
+model Session {
+  id              Int            @id @default(autoincrement())
+  learnerId       Int
+  learner         User           @relation("LearnerSessions", fields: [learnerId], references: [id])
+  mentorProfileId Int
+  mentor          MentorProfile  @relation("MentorSessions", fields: [mentorProfileId], references: [id])
+  courseCode      String
+  courseName      String
+  scheduledDate   DateTime
+  durationMinutes Int            @default(60)
+  status          String         @default("upcoming")
+  location        String         @default("")
+  notes           String?
+  volunteerHour   VolunteerHour?
+  createdAt       DateTime       @default(now())
+
+  @@map("sessions")
+}
+
+model Conversation {
+  id        Int       @id @default(autoincrement())
+  user1Id   Int
+  user1     User      @relation("ConvUser1", fields: [user1Id], references: [id])
+  user2Id   Int
+  user2     User      @relation("ConvUser2", fields: [user2Id], references: [id])
+  messages  Message[]
+  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now())
+
+  @@unique([user1Id, user2Id])
+  @@map("conversations")
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       Int
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  text           String
+  isSystem       Boolean      @default(false)
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
+}
+
+model CourseWaitlist {
+  id         Int      @id @default(autoincrement())
+  learnerId  Int
+  learner    User     @relation("WaitlistEntries", fields: [learnerId], references: [id])
+  courseCode String
+  createdAt  DateTime @default(now())
+
+  @@unique([learnerId, courseCode])
+  @@map("course_waitlists")
+}
+
+model StudyGroup {
+  id              Int                @id @default(autoincrement())
+  mentorId        Int
+  mentor          User               @relation("MentorStudyGroups", fields: [mentorId], references: [id])
+  courseCode      String
+  courseName      String
+  title           String
+  scheduledDate   DateTime
+  durationMinutes Int                @default(60)
+  location        String
+  maxStudents     Int                @default(4)
+  members         StudyGroupMember[]
+  createdAt       DateTime           @default(now())
+
+  @@map("study_groups")
+}
+
+model StudyGroupMember {
+  id           Int        @id @default(autoincrement())
+  studyGroupId Int
+  studyGroup   StudyGroup @relation(fields: [studyGroupId], references: [id])
+  learnerId    Int
+  learner      User       @relation("StudyGroupMembers", fields: [learnerId], references: [id])
+  joinedAt     DateTime   @default(now())
+
+  @@unique([studyGroupId, learnerId])
+  @@map("study_group_members")
+}
+
+model VolunteerHour {
+  id              Int      @id @default(autoincrement())
+  mentorId        Int
+  mentor          User     @relation(fields: [mentorId], references: [id])
+  sessionId       Int      @unique
+  session         Session  @relation(fields: [sessionId], references: [id])
+  durationMinutes Int
+  status          String   @default("pending")
+  loggedAt        DateTime @default(now())
+
+  @@map("volunteer_hours")
+}
+
+model StudyNote {
+  id         Int      @id @default(autoincrement())
+  mentorId   Int
+  mentor     User     @relation("MentorStudyNotes", fields: [mentorId], references: [id])
+  schoolId   String
+  school     School   @relation(fields: [schoolId], references: [id])
+  courseCode String
+  courseName String
+  title      String
+  content    String
+  createdAt  DateTime @default(now())
+
+  @@map("study_notes")
+}
+
+model Quiz {
+  id           Int            @id @default(autoincrement())
+  mentorId     Int
+  mentor       User           @relation("MentorQuizzes", fields: [mentorId], references: [id])
+  schoolId     String
+  school       School         @relation("SchoolQuizzes", fields: [schoolId], references: [id])
+  courseCode   String
+  courseName   String
+  title        String
+  difficulty   String         @default("medium")
+  sourceNoteId Int?
+  questions    QuizQuestion[]
+  attempts     QuizAttempt[]
+  createdAt    DateTime       @default(now())
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id            Int    @id @default(autoincrement())
+  quizId        Int
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  questionText  String
+  options       String
+  correctAnswer String
+  explanation   String
+  order         Int
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id             Int       @id @default(autoincrement())
+  quizId         Int
+  quiz           Quiz      @relation(fields: [quizId], references: [id])
+  learnerId      Int
+  learner        User      @relation("LearnerQuizAttempts", fields: [learnerId], references: [id])
+  responses      String    @default("{}")
+  score          Float     @default(0)
+  correctAnswers Int       @default(0)
+  totalQuestions Int
+  completed      Boolean   @default(false)
+  completedAt    DateTime?
+  startedAt      DateTime  @default(now())
+
+  @@map("quiz_attempts")
+}
