@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: mentorbridge
-    runtime: docker
-    plan: free
-    healthCheckPath: /
-    envVars:
-      - key: NODE_ENV
-        value: production
