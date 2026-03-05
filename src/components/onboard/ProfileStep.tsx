@@ -26,14 +26,14 @@ export default function ProfileStep({ role, school, onComplete, onBack }: Props)
     : "");
 
   async function handleSubmit() {
-    if (!name || !grade) return;
+    if (!name || !grade || !email.trim()) return;
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), grade, role, schoolId: school.id, avatarColor, email: email.trim() || undefined }),
+        body: JSON.stringify({ name: name.trim(), grade, role, schoolId: school.id, avatarColor, email: email.trim() }),
       });
       if (!res.ok) throw new Error("Failed to create account");
       const user = await res.json();
@@ -77,7 +77,7 @@ export default function ProfileStep({ role, school, onComplete, onBack }: Props)
         </div>
 
         <div className="form-row">
-          <label className="form-lbl">Email <span style={{ color: "#637088", fontWeight: 400 }}>(optional — used to sign back in)</span></label>
+          <label className="form-lbl">Email</label>
           <input className="form-input" type="email" placeholder="e.g. jordan@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
 
@@ -94,7 +94,7 @@ export default function ProfileStep({ role, school, onComplete, onBack }: Props)
 
         <div className="ob-acts">
           <button className="btn btn-ghost" onClick={onBack} disabled={loading}>← Back</button>
-          <button className="btn btn-primary" disabled={!name || !grade || loading} onClick={handleSubmit}>
+          <button className="btn btn-primary" disabled={!name || !grade || !email.trim() || loading} onClick={handleSubmit}>
             {loading ? "Creating…" : "Enter MentorBridge 🎉"}
           </button>
         </div>
