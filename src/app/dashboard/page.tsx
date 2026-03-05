@@ -40,7 +40,7 @@ export default function DashboardPage() {
     const id = localStorage.getItem("mb_user_id");
     const raw = localStorage.getItem("mb_profile");
     if (!id || !raw) {
-      router.replace("/");
+      router.replace("/onboard");
       return;
     }
     const parsed: UserProfile = JSON.parse(raw);
